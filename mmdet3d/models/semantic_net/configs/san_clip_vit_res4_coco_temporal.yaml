@@ -1,0 +1,7 @@
+_BASE_: Base-coco-stuff-164K-171.yaml
+MODEL:
+  META_ARCHITECTURE: "SANInVeonTemporal"
+  SAN:
+    CLIP_PRETRAINED_NAME: 'openai' # 'ckpts/clipsan/ViT-B-16-state_dict.pt'
+SOLVER:
+  BACKBONE_MULTIPLIER: 1.0

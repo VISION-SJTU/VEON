@@ -1,0 +1,20 @@
+_BASE_: san_clip_vit_res4_coco_temporal.yaml
+MODEL:
+  SAN:
+    CLIP_RESOLUTION: 0.5
+    CLIP_MODEL_NAME: "ViT-L-14-336"
+    FEATURE_LAST_LAYER_IDX: 18
+    CLIP_PRETRAINED_NAME: 'openai' # 'ckpts/clipsan/ViT-L-14-336px-state_dict.pt'
+  SIDE_ADAPTER:
+    FUSION_MAP: ["0->0", "6->1", "12->2", "18->3"]
+    ATTN_BIAS:
+      NUM_HEADS: 16
+  HIGHRES_SIDE_ADAPTOR:
+    FUSION_MAP: ["0->3->6", "1->9->12", "2->15->18"]
+    CLIP_DIM: 1024
+    # NUM_CLIP_TOKENS: 900 # 18 * 50
+    NUM_HEADS: 16
+  PROPAGATION_NETWORK:
+    LAYER_DEPTH: 4
+    LIFTING_LAYERS: ["24->0->0"]
+    CLIP_PROJ_DIM: 768
