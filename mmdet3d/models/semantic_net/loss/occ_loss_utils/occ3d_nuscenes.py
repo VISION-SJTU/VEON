@@ -377,7 +377,7 @@ class Proj2Dto3DLoss(nn.Module):
 
 
         # ================================ Fetch parameters ===============================
-        imgs, rots, trans, intrins = img_inputs[:4]
+        imgs, _, _, intrins = img_inputs[:4]
         post_rots, post_trans, bda = img_inputs[4:7]
         lidar2lidarego, lidarego2global, cam2camego, camego2global = img_inputs[7:]
 

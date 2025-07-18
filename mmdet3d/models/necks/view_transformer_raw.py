@@ -68,7 +68,7 @@ class LSSViewTransformerRaw(BaseModule):
         self.ds = ds_feat
         assert len(self.ds) == 3
         self.use_ds = any(x != 1 for x in self.ds)
-        assert self.mode in ['nuscenes', 'semkitti']
+        assert self.mode in ['nuscenes']
         # self.to_dist = nn.Conv2d(90, 90, kernel_size=1, stride=1, bias=True)
 
     def create_grid_infos(self, x, y, z, **kwargs):
@@ -325,8 +325,7 @@ class LSSViewTransformerRaw(BaseModule):
 
             bev_feat = bev_feat.squeeze(2)
         else:
-            coor = self.get_lidar_coor(*input[1:7]) if self.mode == "nuscenes" \
-                           else self.get_lidar_coor_semkitti(*input[1:7])
+            coor = self.get_lidar_coor(*input[1:7])
             bev_feat = self.voxel_pooling_v2(
                 coor, depth.view(B, N, self.D, H, W),
                 tran_feat.view(B, N, self.out_channels, H, W))
@@ -526,9 +525,6 @@ class LSSViewTransformerRaw(BaseModule):
             depth_labels = depth_labels[fg_mask]
             depth_preds = depth_preds[fg_mask]
             with autocast(enabled=False):
-                # loss_raw = F.binary_cross_entropy(depth_preds, depth_labels, reduction='none')
-                # print("max: ", loss_raw.max())
-                # print("sum: ", loss_raw.sum())
                 depth_loss_ce = F.binary_cross_entropy(
                     depth_preds,
                     depth_labels,
@@ -538,31 +534,9 @@ class LSSViewTransformerRaw(BaseModule):
 
         return loss
 
-    # @force_fp32()
-    # def get_depth_loss_mse(self, depth_labels, depth_preds):
-    #     depth_labels = self.get_two_hot_depth(depth_labels)
-    #     depth_preds = self.get_two_hot_depth(depth_preds)
-    #     if len(depth_preds.shape) == 5:
-    #         B, N, C, H, W = depth_preds.shape
-    #         depth_preds = depth_preds.reshape(-1, C, H, W)
-    #     if len(depth_labels.shape) == 5:
-    #         B, N, C, H, W = depth_labels.shape
-    #         depth_labels = depth_labels.reshape(-1, C, H, W)
-    #     depth_preds = depth_preds.permute(0, 2, 3, 1).contiguous().view(-1, self.D)
-    #     depth_labels = depth_labels.permute(0, 2, 3, 1).contiguous().view(-1, self.D)
-    #     with autocast(enabled=False):
-    #         depth_loss = F.mse_loss(depth_preds, depth_labels, reduction='none')
-    #         valid = (depth_labels < 9225)
-    #         depth_loss = (depth_loss * valid).mean() / max(valid.sum(), 1)
-    #     return self.loss_depth_weight * depth_loss
-
     def forward(self, input, depth, stereo_metas=None):
-        # SemanticKITTI
-        if self.mode == "semkitti":
-            (tran_feat, rots, trans, intrins, post_rots, post_trans, bda) = input[:7]
         # NuScenes
-        else:
-            (tran_feat, sensor2egos, ego2globals, intrins, post_rots, post_trans, bda) = input[:7]
+        (tran_feat, sensor2egos, ego2globals, intrins, post_rots, post_trans, bda) = input[:7]
 
         B, N, C, H, W = tran_feat.shape
         tran_feat = tran_feat.view(B * N, C, H, W)
@@ -572,10 +546,6 @@ class LSSViewTransformerRaw(BaseModule):
         # TODO: make sure that depth is in logit format
         bev_feat = self.view_transform(input, depth, tran_feat)
 
-        vis = False
-        if vis:
-            self.lss_res_vis(bev_feat, mode=self.mode)
-
         if self.use_ds:
             bev_feat = rearrange(bev_feat,
                                  'b c (z dz) (h dh) (w dw) -> b c z h w (dz dh dw)',
@@ -584,15 +554,3 @@ class LSSViewTransformerRaw(BaseModule):
 
         return bev_feat
 
-    def lss_res_vis(self, occ_feat, mode="nuscenes"):
-        # To use this module, you should first replace the distribution depth to one-hot depth (see align_net_occ3d.py)
-        from mmdet3d.utils.vis import vis_occ
-        occ_sum = torch.abs(occ_feat).sum(dim=1).permute(0, 3, 2, 1)
-        if mode == "semkitti":
-            bin_vis = torch.where(torch.abs(occ_sum) > 1e-5,
-                                  torch.ones_like(occ_sum, dtype=torch.long), torch.zeros_like(occ_sum, dtype=torch.long))
-        else:
-            bin_vis = torch.where(torch.abs(occ_sum) > 1e-5,
-                                  torch.ones_like(occ_sum, dtype=torch.long), torch.ones_like(occ_sum, dtype=torch.long) * 17)
-        print("not free voxel number: {}".format(bin_vis.sum().item()))
-        vis_occ(bin_vis, folder='train_vis/lss_test', occ_tag="lss_{}".format(mode), mode=mode)

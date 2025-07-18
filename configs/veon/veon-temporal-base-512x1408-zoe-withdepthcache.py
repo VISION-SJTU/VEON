@@ -193,8 +193,9 @@ test_pipeline = [
                 type='DefaultFormatBundle3D',
                 class_names=class_names,
                 with_label=False),
-            dict(type='Collect3D', keys=['points', 'img_inputs', 'depth_img_inputs',
-                                         'voxel_semantics', 'mask_camera'])
+            dict(type='Collect3D', keys=['img_inputs', 'gt_depth', 'voxel_semantics',
+                                'mask_lidar', 'mask_camera', 'mask_pseudo', 
+                                'depth_img_inputs', 'depth_preds'])
         ])
 ]
 
