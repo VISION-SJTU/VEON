@@ -327,8 +327,12 @@ class Proj2Dto3DLoss(nn.Module):
             Returns:
                 torch.Tensor - shape(3,H,W): Denormalized input
             """
-            mean = torch.Tensor([122.7709, 116.7460, 104.0937]).view(3, 1, 1).to(x.device)
-            std = torch.Tensor([68.5005, 66.6322, 70.3232]).view(3, 1, 1).to(x.device)
+            # mmlab denormalize
+            mean = torch.Tensor([123.675, 116.28, 103.53]).view(3, 1, 1).to(x.device)
+            std = torch.Tensor([58.395, 57.12, 57.375]).view(3, 1, 1).to(x.device)
+            # clipsan denormalize
+            # mean = torch.Tensor([122.7709, 116.7460, 104.0937]).view(3, 1, 1).to(x.device)
+            # std = torch.Tensor([68.5005, 66.6322, 70.3232]).view(3, 1, 1).to(x.device)
             denorm_tensor = x * std + mean
             return denorm_tensor
 
@@ -336,6 +340,7 @@ class Proj2Dto3DLoss(nn.Module):
         if not os.path.exists(vis_folder):
             os.makedirs(vis_folder, exist_ok=True)
         denorm_image = denormalize_img(image)
+        
         # denorm_img = (denorm_image.cpu().numpy()).astype(np.uint8)
         # img = Image.fromarray(np.transpose(denorm_img, (1, 2, 0))[:, :, ::-1])
         # img.save(os.path.join(vis_folder, tag + "_gt.png"))
@@ -414,6 +419,9 @@ class Proj2Dto3DLoss(nn.Module):
                     self.sample_imgfeat_from2d(sem_seg_2d[b, cid], points_img, spatial_size, sem_valid)
                 gt_semantics = voxel_semantics_rsp[valid_lifted_3d]
                 pred_feat_occ_cur = pred_feat_occ[b][valid_lifted_3d].contiguous()
+
+                # TODO: Visualize projected points
+                # self.visualize_projected_points(imgs[b, cid], coor_2d_raw, tag="proj_curr_{}_{}".format(b, cid))
 
                 class_prob_3d = torch.softmax(class_lifted_3d, dim=0)
                 class_indices_3d = torch.max(class_lifted_3d, dim=0).indices

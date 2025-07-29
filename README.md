@@ -271,7 +271,7 @@ This repository refers to multiple great open-sourced code bases. Thanks for the
 - [open-mmlab](https://github.com/open-mmlab)
 - [BEVDet](https://github.com/HuangJunJie2017/BEVDet)
 - [POP3D](https://github.com/vobecant/POP3D)
-- [Depth-Anthing-V2](https://github.com/DepthAnything/Depth-Anything-V2)
+- [Depth-Anything-V2](https://github.com/DepthAnything/Depth-Anything-V2)
 - [CVPR2023-3D-Occupancy-Prediction](https://github.com/CVPR2023-3D-Occupancy-Prediction/CVPR2023-3D-Occupancy-Prediction)
 - [ZoeDepth](https://github.com/isl-org/ZoeDepth)
 
